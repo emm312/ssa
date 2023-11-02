@@ -108,6 +108,10 @@ impl ModuleBuilder {
         val
     }
 
+    pub fn set_terminator(&mut self, terminator: Terminator) {
+        self.get_block_mut(self.current_block.unwrap()).terminator = terminator;
+    }
+
     // internal function to init values
     #[inline]
     fn push_value(&mut self) -> Value {

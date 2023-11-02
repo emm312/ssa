@@ -71,10 +71,9 @@ pub struct BasicBlock {
 }
 
 pub enum Terminator {
-    Return(Variable),
+    Return(Value),
     Jump(BlockId),
-    BranchCond(Variable, BlockId, BlockId),
-    Branch(Variable, BlockId, BlockId),
+    Branch(Value, BlockId, BlockId),
     NoTerm,
 }
 
@@ -95,6 +94,7 @@ pub enum Operation {
     Call(FunctionId, Vec<Value>),
     LoadVar(VariableId),
     StoreVar(Value, VariableId),
+    Phi(Vec<(Value, BlockId)>),
 }
 
 pub enum BinOp {
@@ -207,7 +207,7 @@ impl Display for Type {
 
 impl Display for BasicBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "${}:", self.name)?;
+        writeln!(f, "{}:", self.name)?;
         for instr in &self.instructions {
             writeln!(f, "    {}", instr)?;
         }
@@ -219,13 +219,10 @@ impl Display for BasicBlock {
 impl Display for Terminator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Terminator::Return(var) => write!(f, "ret %{}", var.name)?,
+            Terminator::Return(var) => write!(f, "ret %{}", var)?,
             Terminator::Jump(block) => write!(f, "jmp ${}", block.0)?,
-            Terminator::BranchCond(var, block1, block2) => {
-                write!(f, "br %{}, ${}, ${}", var.name, block1.0, block2.0)?
-            }
             Terminator::Branch(var, block1, block2) => {
-                write!(f, "br %{}, ${}, ${}", var.name, block1.0, block2.0)?
+                write!(f, "br {}, ${}, ${}", var, block1.0, block2.0)?
             }
             Terminator::NoTerm => write!(f, "noterm")?,
         }
@@ -264,6 +261,14 @@ impl Display for Operation {
             Operation::LoadVar(var) => write!(f, "load %{}", var.0)?,
             Operation::StoreVar(val, var) => write!(f, "store {} %{}", val, var.0)?,
             Operation::Integer(val) => write!(f, "{}", val)?,
+            Operation::Phi(vals) => write!(
+                f,
+                "Φ {}",
+                vals.iter()
+                    .map(|(val, block)| format!("{} ${}", val, block.0))
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            )?,
         }
         Ok(())
     }
