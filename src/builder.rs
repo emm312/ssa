@@ -45,14 +45,22 @@ impl ModuleBuilder {
     }
 
     pub fn push_block(&mut self, name: &str) -> BlockId {
+        let id = self
+            .module
+            .functions
+            .get(self.current_func.unwrap().0)
+            .unwrap()
+            .blocks
+            .len();
         self.module.functions[self.current_func.as_ref().unwrap().0]
             .blocks
             .push(BasicBlock {
                 name: name.to_string(),
                 instructions: vec![],
                 terminator: Terminator::NoTerm,
+                id,
             });
-        BlockId(self.get_func(self.current_func.unwrap()).blocks.len() - 1)
+        BlockId(id)
     }
 
     pub fn switch_to_fn(&mut self, id: FunctionId) {
@@ -104,6 +112,24 @@ impl ModuleBuilder {
         block.instructions.push(Instruction {
             yielded: Some(val),
             operation: Operation::Integer(value),
+        });
+        val
+    }
+
+    pub fn build_store(&mut self, var: VariableId, value: Value) {
+        let block = self.get_block_mut(self.current_block.unwrap());
+        block.instructions.push(Instruction {
+            yielded: None,
+            operation: Operation::StoreVar(var, value),
+        });
+    }
+
+    pub fn build_load(&mut self, var: VariableId) -> Value {
+        let val = self.push_value();
+        let block = self.get_block_mut(self.current_block.unwrap());
+        block.instructions.push(Instruction {
+            yielded: Some(val),
+            operation: Operation::LoadVar(var),
         });
         val
     }

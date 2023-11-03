@@ -68,6 +68,7 @@ pub struct BasicBlock {
     pub(crate) name: String,
     pub(crate) instructions: Vec<Instruction>,
     pub(crate) terminator: Terminator,
+    pub(crate) id: usize,
 }
 
 pub enum Terminator {
@@ -93,7 +94,7 @@ pub enum Operation {
     BinOp(BinOp, Value, Value),
     Call(FunctionId, Vec<Value>),
     LoadVar(VariableId),
-    StoreVar(Value, VariableId),
+    StoreVar(VariableId, Value),
     Phi(Vec<(Value, BlockId)>),
 }
 
@@ -207,7 +208,7 @@ impl Display for Type {
 
 impl Display for BasicBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{}:", self.name)?;
+        writeln!(f, "${} (${}):", self.name, self.id)?;
         for instr in &self.instructions {
             writeln!(f, "    {}", instr)?;
         }
@@ -219,7 +220,7 @@ impl Display for BasicBlock {
 impl Display for Terminator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Terminator::Return(var) => write!(f, "ret %{}", var)?,
+            Terminator::Return(var) => write!(f, "ret {}", var)?,
             Terminator::Jump(block) => write!(f, "jmp ${}", block.0)?,
             Terminator::Branch(var, block1, block2) => {
                 write!(f, "br {}, ${}, ${}", var, block1.0, block2.0)?
@@ -258,8 +259,8 @@ impl Display for Operation {
                     .collect::<Vec<String>>()
                     .join(", ")
             )?,
-            Operation::LoadVar(var) => write!(f, "load %{}", var.0)?,
-            Operation::StoreVar(val, var) => write!(f, "store {} %{}", val, var.0)?,
+            Operation::LoadVar(var) => write!(f, "load #{}", var.0)?,
+            Operation::StoreVar(var, val) => write!(f, "store #{} {}", var.0, val)?,
             Operation::Integer(val) => write!(f, "{}", val)?,
             Operation::Phi(vals) => write!(
                 f,
