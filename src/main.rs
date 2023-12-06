@@ -1,6 +1,6 @@
 use ssa::{
     builder::ModuleBuilder,
-    ir::{Function, Linkage, Module, Type, BinOp, Terminator},
+    ir::{BinOp, Function, Linkage, Module, Terminator, Type},
 };
 
 fn main() {

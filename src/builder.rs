@@ -1,6 +1,6 @@
 use crate::ir::{
     BasicBlock, BinOp, BlockId, Function, FunctionId, Instruction, Linkage, Module, Operation,
-    Terminator, Type, Value, Variable, VariableId,
+    Terminator, Type, ValueId, Variable, VariableId,
 };
 
 pub struct ModuleBuilder {
@@ -12,11 +12,7 @@ pub struct ModuleBuilder {
 impl ModuleBuilder {
     pub fn new(name: &str) -> ModuleBuilder {
         ModuleBuilder {
-            module: Module {
-                functions: vec![],
-                name: name.to_string(),
-                analysed: false,
-            },
+            module: Module::new(name, Vec::new()),
             current_block: None,
             current_func: None,
         }
@@ -59,6 +55,8 @@ impl ModuleBuilder {
                 instructions: vec![],
                 terminator: Terminator::NoTerm,
                 id,
+                preds: Vec::new(),
+                succs: Vec::new(),
             });
         BlockId(id)
     }
@@ -71,7 +69,7 @@ impl ModuleBuilder {
         self.current_block = Some(id);
     }
 
-    pub fn build_binop(&mut self, op: BinOp, lhs: Value, rhs: Value) -> Value {
+    pub fn build_binop(&mut self, op: BinOp, lhs: ValueId, rhs: ValueId) -> ValueId {
         let val = self.push_value();
         let block = self.get_block_mut(self.current_block.unwrap());
         block.instructions.push(Instruction {
@@ -106,7 +104,7 @@ impl ModuleBuilder {
         VariableId(func.variables.len() - 1)
     }
 
-    pub fn build_integer(&mut self, value: i64) -> Value {
+    pub fn build_integer(&mut self, value: i64) -> ValueId {
         let val = self.push_value();
         let block = self.get_block_mut(self.current_block.unwrap());
         block.instructions.push(Instruction {
@@ -116,7 +114,7 @@ impl ModuleBuilder {
         val
     }
 
-    pub fn build_store(&mut self, var: VariableId, value: Value) {
+    pub fn build_store(&mut self, var: VariableId, value: ValueId) {
         let block = self.get_block_mut(self.current_block.unwrap());
         block.instructions.push(Instruction {
             yielded: None,
@@ -124,7 +122,7 @@ impl ModuleBuilder {
         });
     }
 
-    pub fn build_load(&mut self, var: VariableId) -> Value {
+    pub fn build_load(&mut self, var: VariableId) -> ValueId {
         let val = self.push_value();
         let block = self.get_block_mut(self.current_block.unwrap());
         block.instructions.push(Instruction {
@@ -135,13 +133,34 @@ impl ModuleBuilder {
     }
 
     pub fn set_terminator(&mut self, terminator: Terminator) {
+        let cur_blk = self.current_block.unwrap();
+        match terminator {
+            Terminator::Return(_) => {}
+            Terminator::Jump(loc) => {
+                self.get_block_mut(loc).preds.push(cur_blk);
+                self.get_block_mut(self.current_block.unwrap())
+                    .succs
+                    .push(loc);
+            }
+            Terminator::Branch(_, loc1, loc2) => {
+                self.get_block_mut(loc1).preds.push(cur_blk);
+                self.get_block_mut(loc2).preds.push(cur_blk);
+                self.get_block_mut(self.current_block.unwrap())
+                    .succs
+                    .push(loc1);
+                self.get_block_mut(self.current_block.unwrap())
+                    .succs
+                    .push(loc2);
+            }
+            _ => panic!("tried to set terminator to noterm"),
+        }
         self.get_block_mut(self.current_block.unwrap()).terminator = terminator;
     }
 
     // internal function to init values
     #[inline]
-    fn push_value(&mut self) -> Value {
+    fn push_value(&mut self) -> ValueId {
         self.get_func_mut(self.current_func.unwrap()).value_counter += 1;
-        Value(self.get_func(self.current_func.unwrap()).value_counter - 1)
+        ValueId(self.get_func(self.current_func.unwrap()).value_counter - 1)
     }
 }

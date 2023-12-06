@@ -3,7 +3,13 @@ use std::fmt::Display;
 pub struct Module {
     pub(crate) functions: Vec<Function>,
     pub name: String,
-    pub(crate) analysed: bool,
+    pub(crate) analysis_stage: AnalysisStage,
+}
+
+pub enum AnalysisStage {
+    LoweredToSSA,
+    Optimised,
+    Unanalyzed,
 }
 
 impl Module {
@@ -11,7 +17,7 @@ impl Module {
         Module {
             functions,
             name: name.to_string(),
-            analysed: false,
+            analysis_stage: AnalysisStage::Unanalyzed,
         }
     }
 }
@@ -58,6 +64,11 @@ pub struct Variable {
     pub(crate) ty: Type,
 }
 
+pub struct Value {
+    pub(crate) ty: Type,
+    pub(crate) children: Vec<ValueId>,
+}
+
 pub enum Type {
     Void,
     Integer(usize, bool),
@@ -68,13 +79,15 @@ pub struct BasicBlock {
     pub(crate) name: String,
     pub(crate) instructions: Vec<Instruction>,
     pub(crate) terminator: Terminator,
+    pub(crate) preds: Vec<BlockId>,
+    pub(crate) succs: Vec<BlockId>,
     pub(crate) id: usize,
 }
 
 pub enum Terminator {
-    Return(Value),
+    Return(ValueId),
     Jump(BlockId),
-    Branch(Value, BlockId, BlockId),
+    Branch(ValueId, BlockId, BlockId),
     NoTerm,
 }
 
@@ -85,17 +98,17 @@ pub enum Linkage {
 }
 
 pub struct Instruction {
-    pub(crate) yielded: Option<Value>,
+    pub(crate) yielded: Option<ValueId>,
     pub(crate) operation: Operation,
 }
 
 pub enum Operation {
     Integer(i64),
-    BinOp(BinOp, Value, Value),
-    Call(FunctionId, Vec<Value>),
+    BinOp(BinOp, ValueId, ValueId),
+    Call(FunctionId, Vec<ValueId>),
     LoadVar(VariableId),
-    StoreVar(VariableId, Value),
-    Phi(Vec<(Value, BlockId)>),
+    StoreVar(VariableId, ValueId),
+    Phi(Vec<(ValueId, BlockId)>),
 }
 
 pub enum BinOp {
@@ -147,25 +160,33 @@ pub struct FunctionId(pub(crate) usize);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct VariableId(pub(crate) usize);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Value(pub(crate) usize);
+pub struct ValueId(pub(crate) usize);
 
 impl Display for Module {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(
-            f,
-            "/* {} module {} */",
-            match self.analysed {
-                true => "analyzed",
-                false => "unanalyzed",
-            },
-            self.name
-        )?;
+        writeln!(f, "/* {} module {} */", self.analysis_stage, self.name)?;
 
         for func in &self.functions {
             write!(f, "{}", func)?;
         }
 
         Ok(())
+    }
+}
+
+impl Display for AnalysisStage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AnalysisStage::LoweredToSSA => {
+                write!(f, "SSA form of")
+            }
+            AnalysisStage::Optimised => {
+                write!(f, "Optimised form of")
+            }
+            AnalysisStage::Unanalyzed => {
+                write!(f, "Unanalyzed")
+            }
+        }
     }
 }
 
@@ -208,7 +229,17 @@ impl Display for Type {
 
 impl Display for BasicBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "${} (${}):", self.name, self.id)?;
+        writeln!(
+            f,
+            "${} (${}): ; preds = {}",
+            self.name,
+            self.id,
+            self.preds
+                .iter()
+                .map(|e| format!("{}", e))
+                .collect::<Vec<String>>()
+                .join(", ")
+        )?;
         for instr in &self.instructions {
             writeln!(f, "    {}", instr)?;
         }
@@ -240,9 +271,15 @@ impl Display for Instruction {
     }
 }
 
-impl Display for Value {
+impl Display for ValueId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "%{}", self.0)
+    }
+}
+
+impl Display for BlockId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "${}", self.0)
     }
 }
 

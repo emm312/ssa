@@ -1,10 +1,14 @@
+pub mod algos;
 pub mod arch;
 pub mod builder;
 pub mod ir;
 
 #[cfg(test)]
 mod tests {
-    use crate::{builder::ModuleBuilder, ir::{Type, Terminator, BinOp}};
+    use crate::{
+        builder::ModuleBuilder,
+        ir::{BinOp, Terminator, Type},
+    };
 
     #[test]
     fn fig_3dot1() {
@@ -57,7 +61,6 @@ mod tests {
         builder.switch_to_block(bb_a);
         let ld_tmp = builder.build_load(tmp);
         builder.set_terminator(Terminator::Branch(ld_tmp, bb_b, bb_c));
-
 
         builder.print_module();
     }
