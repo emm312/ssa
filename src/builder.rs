@@ -138,17 +138,17 @@ impl ModuleBuilder {
             Terminator::Return(_) => {}
             Terminator::Jump(loc) => {
                 self.get_block_mut(loc).preds.push(cur_blk);
-                self.get_block_mut(self.current_block.unwrap())
+                self.get_block_mut(cur_blk)
                     .succs
                     .push(loc);
             }
             Terminator::Branch(_, loc1, loc2) => {
                 self.get_block_mut(loc1).preds.push(cur_blk);
                 self.get_block_mut(loc2).preds.push(cur_blk);
-                self.get_block_mut(self.current_block.unwrap())
+                self.get_block_mut(cur_blk)
                     .succs
                     .push(loc1);
-                self.get_block_mut(self.current_block.unwrap())
+                self.get_block_mut(cur_blk)
                     .succs
                     .push(loc2);
             }
