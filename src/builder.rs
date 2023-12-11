@@ -1,6 +1,8 @@
+use std::collections::HashSet;
+
 use crate::ir::{
     BasicBlock, BinOp, BlockId, Function, FunctionId, Instruction, Linkage, Module, Operation,
-    Terminator, Type, ValueId, Variable, VariableId,
+    Terminator, Type, Value, ValueId, Variable, VariableId,
 };
 
 pub struct ModuleBuilder {
@@ -20,6 +22,10 @@ impl ModuleBuilder {
 
     pub fn print_module(&self) {
         println!("{}", self.module);
+    }
+
+    pub fn build(self) -> Module {
+        self.module
     }
 
     pub fn push_function(
@@ -69,13 +75,18 @@ impl ModuleBuilder {
         self.current_block = Some(id);
     }
 
-    pub fn build_binop(&mut self, op: BinOp, lhs: ValueId, rhs: ValueId) -> ValueId {
-        let val = self.push_value();
-        let block = self.get_block_mut(self.current_block.unwrap());
-        block.instructions.push(Instruction {
-            yielded: Some(val),
-            operation: Operation::BinOp(op, lhs, rhs),
-        });
+    pub fn build_binop(&mut self, op: BinOp, lhs: ValueId, rhs: ValueId, ty: Type) -> ValueId {
+        let val = self.push_value(ty);
+        let cur_fn = self.get_func_mut(self.current_func.unwrap());
+        cur_fn.values.get_mut(rhs.0).unwrap().children.push(val);
+        cur_fn.values.get_mut(lhs.0).unwrap().children.push(val);
+
+        self.get_block_mut(self.current_block.unwrap())
+            .instructions
+            .push(Instruction {
+                yielded: Some(val),
+                operation: Operation::BinOp(op, lhs, rhs),
+            });
         val
     }
 
@@ -100,12 +111,13 @@ impl ModuleBuilder {
         func.variables.push(Variable {
             name: name.to_string(),
             ty,
+            bbs_assign_to: HashSet::new(),
         });
         VariableId(func.variables.len() - 1)
     }
 
-    pub fn build_integer(&mut self, value: i64) -> ValueId {
-        let val = self.push_value();
+    pub fn build_integer(&mut self, value: i64, ty: Type) -> ValueId {
+        let val = self.push_value(ty);
         let block = self.get_block_mut(self.current_block.unwrap());
         block.instructions.push(Instruction {
             yielded: Some(val),
@@ -115,15 +127,24 @@ impl ModuleBuilder {
     }
 
     pub fn build_store(&mut self, var: VariableId, value: ValueId) {
-        let block = self.get_block_mut(self.current_block.unwrap());
+        let cur_blk = self.current_block.unwrap();
+
+        let block = self.get_block_mut(cur_blk);
         block.instructions.push(Instruction {
             yielded: None,
             operation: Operation::StoreVar(var, value),
         });
+
+        let func = self.get_func_mut(self.current_func.unwrap());
+        func.variables[var.0].bbs_assign_to.insert(cur_blk);
     }
 
     pub fn build_load(&mut self, var: VariableId) -> ValueId {
-        let val = self.push_value();
+        let val = self.push_value(
+            self.get_func(self.current_func.unwrap()).variables[var.0]
+                .ty
+                .clone(),
+        );
         let block = self.get_block_mut(self.current_block.unwrap());
         block.instructions.push(Instruction {
             yielded: Some(val),
@@ -138,19 +159,13 @@ impl ModuleBuilder {
             Terminator::Return(_) => {}
             Terminator::Jump(loc) => {
                 self.get_block_mut(loc).preds.push(cur_blk);
-                self.get_block_mut(cur_blk)
-                    .succs
-                    .push(loc);
+                self.get_block_mut(cur_blk).succs.push(loc);
             }
             Terminator::Branch(_, loc1, loc2) => {
                 self.get_block_mut(loc1).preds.push(cur_blk);
                 self.get_block_mut(loc2).preds.push(cur_blk);
-                self.get_block_mut(cur_blk)
-                    .succs
-                    .push(loc1);
-                self.get_block_mut(cur_blk)
-                    .succs
-                    .push(loc2);
+                self.get_block_mut(cur_blk).succs.push(loc1);
+                self.get_block_mut(cur_blk).succs.push(loc2);
             }
             _ => panic!("tried to set terminator to noterm"),
         }
@@ -159,8 +174,15 @@ impl ModuleBuilder {
 
     // internal function to init values
     #[inline]
-    fn push_value(&mut self) -> ValueId {
-        self.get_func_mut(self.current_func.unwrap()).value_counter += 1;
-        ValueId(self.get_func(self.current_func.unwrap()).value_counter - 1)
+    fn push_value(&mut self, ty: Type) -> ValueId {
+        let owner = self.current_block.unwrap();
+        self.get_func_mut(self.current_func.unwrap())
+            .values
+            .push(Value {
+                ty,
+                children: vec![],
+                owner,
+            });
+        ValueId(self.get_func(self.current_func.unwrap()).values.len())
     }
 }

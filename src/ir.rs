@@ -1,11 +1,16 @@
-use std::fmt::Display;
+use std::{
+    collections::HashSet,
+    fmt::Display,
+};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Module {
     pub(crate) functions: Vec<Function>,
     pub name: String,
     pub(crate) analysis_stage: AnalysisStage,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum AnalysisStage {
     LoweredToSSA,
     Optimised,
@@ -22,6 +27,7 @@ impl Module {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Function {
     pub name: String,
     pub(crate) ret_type: Type,
@@ -30,7 +36,7 @@ pub struct Function {
     pub(crate) linkage: Linkage,
     pub(crate) variables: Vec<Variable>,
     pub(crate) id: usize,
-    pub(crate) value_counter: usize,
+    pub(crate) values: Vec<Value>,
 }
 
 impl Function {
@@ -49,32 +55,102 @@ impl Function {
             blocks: vec![],
             linkage,
             variables,
-            value_counter: 0,
             id,
+            values: vec![],
         }
     }
 
-    pub fn push_block(&mut self, block: BasicBlock) {
+    pub(crate) fn push_block(&mut self, block: BasicBlock) {
         self.blocks.push(block);
+    }
+
+    pub(crate) fn push_value(&mut self, ty: Type) -> ValueId {
+        let id = self.values.len();
+        self.values.push(Value {
+            ty,
+            children: vec![],
+            owner: BlockId(0),
+        });
+        ValueId(id)
+    }
+
+    pub(crate) fn replace_children_with(&mut self, original: ValueId, to_replace_to: ValueId) {
+        for bb in self.blocks.iter_mut() {
+            for instr in bb.instructions.iter_mut() {
+                match &mut instr.operation {
+                    Operation::BinOp(_, ref mut lhs, ref mut rhs) => {
+                        if *lhs == original {
+                            *lhs = to_replace_to;
+                        }
+                        if *rhs == original {
+                            *rhs = to_replace_to;
+                        }
+                    }
+                    Operation::Call(_, ref mut args) => {
+                        for arg in args.iter_mut() {
+                            if *arg == original {
+                                *arg = to_replace_to;
+                            }
+                        }
+                    }
+                    Operation::StoreVar(.., ref mut val) => {
+                        if *val == original {
+                            *val = to_replace_to;
+                        }
+                    }
+                    Operation::Phi(ref mut vals) => {
+                        vals.iter_mut().for_each(|val| {
+                            if *val == original {
+                                *val = to_replace_to;
+                            }
+                        });
+                    }
+                    _ => (),
+                }
+            }
+            match bb.terminator {
+                Terminator::Return(ref mut val) => {
+                    if *val == original {
+                        *val = to_replace_to;
+                    }
+                }
+                Terminator::Branch(ref mut val, ..) => {
+                    if *val == original {
+                        *val = to_replace_to;
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+
+    pub fn replace_instruction(&mut self, block: BlockId, instr: usize, new_instr: Instruction) {
+        self.blocks[block.0].instructions[instr] = new_instr;
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Variable {
     pub(crate) name: String,
     pub(crate) ty: Type,
+    pub(crate) bbs_assign_to: HashSet<BlockId>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Value {
     pub(crate) ty: Type,
     pub(crate) children: Vec<ValueId>,
+    pub(crate) owner: BlockId,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Type {
     Void,
     Integer(usize, bool),
     Pointer(Box<Type>),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BasicBlock {
     pub(crate) name: String,
     pub(crate) instructions: Vec<Instruction>,
@@ -84,6 +160,7 @@ pub struct BasicBlock {
     pub(crate) id: usize,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Terminator {
     Return(ValueId),
     Jump(BlockId),
@@ -91,26 +168,30 @@ pub enum Terminator {
     NoTerm,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Linkage {
     Public,
     Private,
     External,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Instruction {
     pub(crate) yielded: Option<ValueId>,
     pub(crate) operation: Operation,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Operation {
     Integer(i64),
     BinOp(BinOp, ValueId, ValueId),
     Call(FunctionId, Vec<ValueId>),
     LoadVar(VariableId),
     StoreVar(VariableId, ValueId),
-    Phi(Vec<(ValueId, BlockId)>),
+    Phi(Vec<ValueId>),
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum BinOp {
     Add,
     Sub,
@@ -303,7 +384,7 @@ impl Display for Operation {
                 f,
                 "Φ {}",
                 vals.iter()
-                    .map(|(val, block)| format!("{} ${}", val, block.0))
+                    .map(|val| format!("{}", val))
                     .collect::<Vec<String>>()
                     .join(", ")
             )?,
