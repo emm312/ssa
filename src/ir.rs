@@ -1,7 +1,4 @@
-use std::{
-    collections::HashSet,
-    fmt::Display,
-};
+use std::{collections::HashSet, fmt::Display};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Module {

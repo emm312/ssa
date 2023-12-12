@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use crate::ir::{
-    AnalysisStage, BasicBlock, BlockId, Instruction, Module, Operation, ValueId, VariableId, Function,
+    AnalysisStage, BasicBlock, BlockId, Function, Instruction, Module, Operation, ValueId,
+    VariableId,
 };
 
 use super::delete_instructions::delete;
@@ -112,9 +113,7 @@ fn find_defs_in_preds(
         if let Some(val) = find_last_def(&func.blocks[pred.0], var) {
             defs.push(val);
         } else {
-            defs.append(&mut find_defs_in_preds(
-                func, pred, var, stop_at, to,
-            ));
+            defs.append(&mut find_defs_in_preds(func, pred, var, stop_at, to));
         }
     }
     defs
