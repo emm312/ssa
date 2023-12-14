@@ -114,7 +114,7 @@ mod tests {
         let mut module = builder.build();
         lower_to_ssa::lower(&mut module);
 
-        let vcode = VCodeGenerator::<_, urcl::UrclSelector>::lower(&module);
-        println!("{}", vcode);
+        //let vcode = VCodeGenerator::<_, urcl::UrclSelector>::lower(&module);
+        //println!("{}", vcode);
     }
 }

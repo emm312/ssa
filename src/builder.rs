@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
-use crate::ir::{
+use crate::{ir::{
     BasicBlock, BinOp, BlockId, Function, FunctionId, Instruction, Linkage, Module, Operation,
     Terminator, Type, Value, ValueId, Variable, VariableId,
-};
+}, algos};
 
 pub struct ModuleBuilder {
     module: Module,
@@ -24,8 +24,14 @@ impl ModuleBuilder {
         println!("{}", self.module);
     }
 
-    pub fn build(self) -> Module {
-        self.module
+    pub fn build(&self) -> Module {
+        let mut module = self.module.clone();
+        algos::lower_to_ssa::lower(&mut module);
+        module
+    }
+
+    pub fn build_nossa(&self) -> Module {
+        self.module.clone()
     }
 
     pub fn push_function(

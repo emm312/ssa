@@ -1,6 +1,6 @@
 use std::{fmt::Display, collections::HashMap};
 
-use crate::{regalloc::VReg, vcode::{VCodeInstr, LabelDest, InstrSelector}, ir::Value};
+use crate::{regalloc::VReg, vcode::{VCodeInstr, LabelDest, InstrSelector, VCodeGenerator}, ir::{Value, Instruction}};
 
 pub const URCL_REG_1: usize = 1;
 pub const URCL_REG_2: usize = 2;
@@ -87,11 +87,7 @@ pub struct UrclSelector {
 
 impl InstrSelector for UrclSelector {
     type Instr = UrclInstr;
-    fn select(gen: &mut VCodeGenerator, instr: &Instruction) -> UrclInstr {
-        let rd = match instr.
-        match instr {
-            
-            _ => unreachable!()
-        }
+    fn select(gen: &mut VCodeGenerator<Self::Instr>, instr: &Instruction) -> UrclInstr {
+        todo!()
     }
 }
