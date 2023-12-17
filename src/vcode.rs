@@ -1,10 +1,11 @@
 use std::fmt::Display;
 
-use crate::{ir::{Instruction, Linkage, Module}, regalloc::VReg};
+use crate::{ir::{Instruction, Linkage, Terminator}, regalloc::VReg};
 
 pub trait InstrSelector {
     type Instr: VCodeInstr;
-    fn select(gen: &mut VCodeGenerator<Self::Instr>, instr: &Instruction) -> Self::Instr;
+    fn select(&mut self, gen: &mut VCodeGenerator<Self::Instr>, instr: &Instruction);
+    fn select_terminator(&mut self, gen: &mut VCodeGenerator<Self::Instr>, term: &Terminator);
 }
 
 pub trait VCodeInstr {
@@ -35,10 +36,63 @@ pub struct VCode<I: VCodeInstr> {
 
 pub struct VCodeGenerator<I: VCodeInstr> {
     vcode: VCode<I>,
+    current_func: Option<usize>,
+    current_block: Option<usize>,
+    vreg_count: usize,
 }
 
 impl<I: VCodeInstr> VCodeGenerator<I> {
-    
+    pub fn new() -> VCodeGenerator<I> {
+        VCodeGenerator {
+            vcode: VCode { functions: vec![] },
+            current_func: None,
+            current_block: None,
+            vreg_count: 0,
+        }
+    }
+    pub fn push_vreg(&mut self) -> VReg {
+        let vreg = VReg::Virtual(self.vreg_count);
+        self.vreg_count += 1;
+        vreg
+    }
+    pub fn push_instr(&mut self, instr: I) {
+        self.vcode
+            .functions
+            .get_mut(self.current_func.unwrap())
+            .unwrap()
+            .instrs
+            .get_mut(self.current_block.unwrap())
+            .unwrap()
+            .instrs
+            .push(instr);
+    }
+    pub fn push_block(&mut self) -> usize {
+        let func = self
+            .vcode
+            .functions
+            .get_mut(self.current_func.unwrap())
+            .unwrap();
+        func.instrs.push(LabelledInstructions { instrs: vec![] });
+        func.instrs.len() - 1
+    }
+    pub fn push_function(&mut self, name: &str, linkage: Linkage, arg_count: usize) -> usize {
+        self.vcode.functions.push(VCodeFunction {
+            name: name.to_string(),
+            instrs: vec![],
+            linkage,
+            arg_count,
+        });
+        self.vcode.functions.len() - 1
+    }
+    pub fn switch_to_func(&mut self, id: usize) {
+        self.current_func = Some(id);
+    }
+    pub fn switch_to_block(&mut self, id: usize) {
+        self.current_block = Some(id);
+    }
+    pub fn build(self) -> VCode<I> {
+        self.vcode
+    }
 }
 
 impl<I: Display + VCodeInstr> Display for VCode<I> {

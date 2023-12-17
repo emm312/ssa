@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum VReg {
     Virtual(usize),
     Real(usize),

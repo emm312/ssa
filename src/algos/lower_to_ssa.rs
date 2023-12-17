@@ -77,7 +77,6 @@ pub fn remove_singleelem_phis(module: &mut Module) {
                         // mark for deletion
                         dels[func_id][block_id][pos] = true;
                     }
-                } else {
                 }
             }
         }

@@ -1,5 +1,7 @@
 use std::{collections::HashSet, fmt::Display};
 
+use crate::vcode::{InstrSelector, VCode, VCodeInstr, VCodeGenerator};
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Module {
     pub(crate) functions: Vec<Function>,
@@ -21,6 +23,24 @@ impl Module {
             name: name.to_string(),
             analysis_stage: AnalysisStage::Unanalyzed,
         }
+    }
+
+    pub fn lower_to_vcode<I: VCodeInstr, S: InstrSelector<Instr = I> + Default>(&self) -> VCode<I> {
+        let mut gen = VCodeGenerator::new();
+        let mut selector = S::default();
+        for func in self.functions.iter() {
+            let f = gen.push_function(&func.name, func.linkage, func.args.len());
+            gen.switch_to_func(f);
+            for bb in func.blocks.iter() {
+                let b = gen.push_block();
+                gen.switch_to_block(b);
+                for instr in bb.instructions.iter() {
+                    selector.select(&mut gen, &instr);
+                }
+                selector.select_terminator(&mut gen, &bb.terminator);
+            }
+        }
+        gen.build()
     }
 }
 
@@ -119,6 +139,9 @@ impl Function {
                 _ => (),
             }
         }
+        let mut c = self.values[original.0].children.clone();
+        self.values[to_replace_to.0].children.append(&mut c);
+        self.values.remove(original.0);
     }
 
     pub fn replace_instruction(&mut self, block: BlockId, instr: usize, new_instr: Instruction) {
@@ -297,7 +320,7 @@ impl Display for Type {
         match self {
             Type::Void => write!(f, "void")?,
             Type::Integer(size, signed) => {
-                write!(f, "{}i{}", size, if *signed { "s" } else { "u" })?
+                write!(f, "{}{}", if *signed { "s" } else { "u" }, size)?
             }
             Type::Pointer(ty) => write!(f, "{}*", ty)?,
         }

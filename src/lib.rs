@@ -12,7 +12,7 @@ mod tests {
     use crate::{
         algos::lower_to_ssa,
         builder::ModuleBuilder,
-        ir::{BinOp, Terminator, Type, Linkage}, vcode::VCodeGenerator, arch::urcl,
+        ir::{BinOp, Terminator, Type, Linkage}, vcode::VCodeGenerator, arch::urcl::{self, UrclSelector},
     };
 
     #[test]
@@ -72,6 +72,8 @@ mod tests {
         let mut module = builder.build();
         lower_to_ssa::lower(&mut module);
         println!("{}", module);
+        let vcode = module.lower_to_vcode::<_, UrclSelector>();
+        println!("{}", vcode);
     }
 
     #[test]
@@ -113,8 +115,8 @@ mod tests {
         builder.set_terminator(Terminator::Return(val));
         let mut module = builder.build();
         lower_to_ssa::lower(&mut module);
-
-        //let vcode = VCodeGenerator::<_, urcl::UrclSelector>::lower(&module);
-        //println!("{}", vcode);
+        println!("{}", module);
+        let vcode = module.lower_to_vcode::<_, UrclSelector>();
+        println!("{}", vcode);
     }
 }
