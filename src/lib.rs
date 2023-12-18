@@ -12,7 +12,7 @@ mod tests {
     use crate::{
         algos::lower_to_ssa,
         builder::ModuleBuilder,
-        ir::{BinOp, Terminator, Type, Linkage}, vcode::VCodeGenerator, arch::urcl::{self, UrclSelector},
+        ir::{BinOp, Terminator, Type}, arch::urcl::UrclSelector,
     };
 
     #[test]
