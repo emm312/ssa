@@ -12,7 +12,7 @@ pub trait InstrSelector {
 }
 
 pub trait VCodeInstr {
-    fn get_usable_regs() -> Vec<VReg>;
+    fn get_usable_regs() -> &'static [VReg];
 }
 
 pub struct VCodeFunction<I: VCodeInstr> {

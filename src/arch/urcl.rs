@@ -96,8 +96,8 @@ impl From<BinOp> for UrclAluOp {
 }
 
 impl VCodeInstr for UrclInstr {
-    fn get_usable_regs() -> Vec<VReg> {
-        vec![
+    fn get_usable_regs() -> &'static [VReg] {
+        &[
             VReg::Real(URCL_REG_1),
             VReg::Real(URCL_REG_2),
             VReg::Real(URCL_REG_3),
@@ -171,12 +171,12 @@ pub struct UrclSelector;
 impl InstrSelector for UrclSelector {
     type Instr = UrclInstr;
     fn select(&mut self, gen: &mut VCodeGenerator<Self::Instr>, instr: &Instruction) {
-        let dst;
-        if let Some(val) = instr.yielded {
-            dst = self.get_vreg(val);
+        let dst = if let Some(val) = instr.yielded {
+            self.get_vreg(val)
         } else {
-            dst = VReg::Real(URCL_REG_ZR)
-        }
+            VReg::Real(URCL_REG_ZR)
+        };
+
         match &instr.operation {
             Operation::BinOp(op, lhs, rhs) => {
                 let src1 = self.get_vreg(*lhs);

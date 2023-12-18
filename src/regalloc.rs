@@ -16,3 +16,8 @@ impl Display for VReg {
         }
     }
 }
+
+pub trait Regalloc {
+    /// This function forces a set of registers to match a VReg::Real
+    fn force_same(&mut self, a: VReg, b: &[VReg]);
+}
