@@ -34,7 +34,7 @@ pub fn lower(module: &mut Module) {
                         } else {
                             // backtrack through preds for a def
                             let defs = find_defs_in_preds(
-                                &func,
+                                func,
                                 BlockId(block_id),
                                 var,
                                 BlockId(block_id),

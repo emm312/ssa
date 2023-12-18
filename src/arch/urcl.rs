@@ -1,6 +1,6 @@
-use std::{fmt::Display, collections::HashMap, panic::Location};
+use std::fmt::Display;
 
-use crate::{regalloc::VReg, vcode::{VCodeInstr, LabelDest, InstrSelector, VCodeGenerator}, ir::{Value, Instruction, ValueId, Operation, BinOp, Terminator}};
+use crate::{regalloc::VReg, vcode::{VCodeInstr, LabelDest, InstrSelector, VCodeGenerator}, ir::{Instruction, ValueId, Operation, BinOp, Terminator}};
 
 pub const URCL_REG_ZR: usize = 0;
 pub const URCL_REG_1: usize = 1;
@@ -149,33 +149,26 @@ impl Display for UrclAluOp {
 }
 
 #[derive(Default)]
-pub struct UrclSelector {
-    val_map: HashMap<ValueId, VReg>,
-}
+pub struct UrclSelector;
 
 impl InstrSelector for UrclSelector {
     type Instr = UrclInstr;
     fn select(&mut self, gen: &mut VCodeGenerator<Self::Instr>, instr: &Instruction) {
         let dst;
         if let Some(val) = instr.yielded {
-            if let Some(vreg) = self.val_map.get(&val) {
-                dst = *vreg;
-            } else {
-                dst = gen.push_vreg();
-                self.val_map.insert(val, dst);
-            }
+            dst = self.get_vreg(val);
         } else {
             dst = VReg::Real(URCL_REG_ZR)
         }
         match &instr.operation {
             Operation::BinOp(op, lhs, rhs) => {
-                let src1 = self.val_map.get(&lhs).unwrap();
-                let src2 = self.val_map.get(&rhs).unwrap();
+                let src1 = self.get_vreg(*lhs);
+                let src2 = self.get_vreg(*rhs);
                 gen.push_instr(UrclInstr::AluOp {
                     op: (*op).into(),
                     dst,
-                    src1: *src1,
-                    src2: *src2,
+                    src1,
+                    src2,
                 });
             }
             Operation::Integer(val) => {
@@ -185,7 +178,7 @@ impl InstrSelector for UrclSelector {
             Operation::Phi(vals) => {
                 gen.push_instr(UrclInstr::PhiPlaceholder {
                     dst,
-                    ops: vals.iter().map(|v| self.val_map[v]).collect()
+                    ops: vals.iter().map(|v| self.get_vreg(*v)).collect()
                 });
             }
             _ => todo!()
@@ -195,17 +188,24 @@ impl InstrSelector for UrclSelector {
     fn select_terminator(&mut self, gen: &mut VCodeGenerator<Self::Instr>, term: &Terminator) {
         match term {
             Terminator::Branch(val, t, f) => {
-                gen.push_instr(UrclInstr::Beq { src1: self.val_map[&val], dst: LabelDest::Block(t.0) });
+                gen.push_instr(UrclInstr::Beq { src1: self.get_vreg(*val), dst: LabelDest::Block(t.0) });
                 gen.push_instr(UrclInstr::Jmp { dst: LabelDest::Block(f.0) });
             }
             Terminator::Jump(l) => {
                 gen.push_instr(UrclInstr::Jmp { dst: LabelDest::Block(l.0) });
             }
             Terminator::Return(val) => {
-                gen.push_instr(UrclInstr::Mov { dst: VReg::Real(URCL_REG_1), src: self.val_map[&val]});
+                gen.push_instr(UrclInstr::Mov { dst: VReg::Real(URCL_REG_1), src: self.get_vreg(*val)});
                 gen.push_instr(UrclInstr::Ret);
             }
             _ => todo!()
         }
+    }
+}
+
+impl UrclSelector {
+    #[inline]
+    pub fn get_vreg(&self, val: ValueId) -> VReg {
+        VReg::Virtual(val.0)
     }
 }

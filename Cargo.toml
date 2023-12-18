@@ -2,6 +2,8 @@
 name = "ssa"
 version = "0.1.0"
 edition = "2021"
+authors = ["emm312"]
+description = "A simple codegen library using a SSA IR which is easily retargetable and fast"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

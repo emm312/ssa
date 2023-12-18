@@ -35,7 +35,7 @@ impl Module {
                 let b = gen.push_block();
                 gen.switch_to_block(b);
                 for instr in bb.instructions.iter() {
-                    selector.select(&mut gen, &instr);
+                    selector.select(&mut gen, instr);
                 }
                 selector.select_terminator(&mut gen, &bb.terminator);
             }
@@ -141,7 +141,7 @@ impl Function {
         }
         let mut c = self.values[original.0].children.clone();
         self.values[to_replace_to.0].children.append(&mut c);
-        self.values.remove(original.0);
+        self.values[original.0].children.clear();
     }
 
     pub fn replace_instruction(&mut self, block: BlockId, instr: usize, new_instr: Instruction) {

@@ -41,6 +41,12 @@ pub struct VCodeGenerator<I: VCodeInstr> {
     vreg_count: usize,
 }
 
+impl<I: VCodeInstr> Default for VCodeGenerator<I> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<I: VCodeInstr> VCodeGenerator<I> {
     pub fn new() -> VCodeGenerator<I> {
         VCodeGenerator {

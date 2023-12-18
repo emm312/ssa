@@ -189,6 +189,6 @@ impl ModuleBuilder {
                 children: vec![],
                 owner,
             });
-        ValueId(self.get_func(self.current_func.unwrap()).values.len())
+        ValueId(self.get_func(self.current_func.unwrap()).values.len()-1)
     }
 }
