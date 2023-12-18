@@ -4,7 +4,7 @@ use std::fmt::Display;
 pub enum VReg {
     Virtual(usize),
     Real(usize),
-    Spilled(usize)
+    Spilled(usize),
 }
 
 impl Display for VReg {

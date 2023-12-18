@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt::Display};
 
-use crate::vcode::{InstrSelector, VCode, VCodeInstr, VCodeGenerator};
+use crate::vcode::{InstrSelector, VCode, VCodeGenerator, VCodeInstr};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Module {

@@ -1,6 +1,10 @@
 use std::fmt::Display;
 
-use crate::{regalloc::VReg, vcode::{VCodeInstr, LabelDest, InstrSelector, VCodeGenerator}, ir::{Instruction, ValueId, Operation, BinOp, Terminator}};
+use crate::{
+    ir::{BinOp, Instruction, Operation, Terminator, ValueId},
+    regalloc::VReg,
+    vcode::{InstrSelector, LabelDest, VCodeGenerator, VCodeInstr},
+};
 
 pub const URCL_REG_ZR: usize = 0;
 pub const URCL_REG_1: usize = 1;
@@ -18,7 +22,7 @@ pub const URCL_REG_8: usize = 8;
 pub enum UrclInstr {
     PhiPlaceholder {
         dst: VReg,
-        ops: Vec<VReg>
+        ops: Vec<VReg>,
     },
     AluOp {
         op: UrclAluOp,
@@ -44,7 +48,7 @@ pub enum UrclInstr {
     Cal {
         dst: LabelDest,
     },
-    Ret
+    Ret,
 }
 
 pub enum UrclAluOp {
@@ -65,7 +69,7 @@ pub enum UrclAluOp {
     Ssetl,
     Ssetle,
     Ssetg,
-    Ssetge
+    Ssetge,
 }
 
 impl From<BinOp> for UrclAluOp {
@@ -109,7 +113,12 @@ impl VCodeInstr for UrclInstr {
 impl Display for UrclInstr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            UrclInstr::AluOp { op, dst, src1, src2 } => {
+            UrclInstr::AluOp {
+                op,
+                dst,
+                src1,
+                src2,
+            } => {
                 write!(f, "{} {} {} {}", op, dst, src1, src2)
             }
             UrclInstr::Jmp { dst } => write!(f, "jmp {}", dst),
@@ -118,7 +127,15 @@ impl Display for UrclInstr {
             UrclInstr::Mov { dst, src } => write!(f, "mov {} {}", dst, src),
             UrclInstr::Cal { dst } => write!(f, "cal {}", dst),
             UrclInstr::Ret => write!(f, "ret"),
-            UrclInstr::PhiPlaceholder { dst, ops } => write!(f, "phi {} {}", dst, ops.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(" "))
+            UrclInstr::PhiPlaceholder { dst, ops } => write!(
+                f,
+                "phi {} {}",
+                dst,
+                ops.iter()
+                    .map(|v| v.to_string())
+                    .collect::<Vec<String>>()
+                    .join(" ")
+            ),
         }
     }
 }
@@ -178,27 +195,37 @@ impl InstrSelector for UrclSelector {
             Operation::Phi(vals) => {
                 gen.push_instr(UrclInstr::PhiPlaceholder {
                     dst,
-                    ops: vals.iter().map(|v| self.get_vreg(*v)).collect()
+                    ops: vals.iter().map(|v| self.get_vreg(*v)).collect(),
                 });
             }
-            _ => todo!()
+            _ => todo!(),
         }
     }
 
     fn select_terminator(&mut self, gen: &mut VCodeGenerator<Self::Instr>, term: &Terminator) {
         match term {
             Terminator::Branch(val, t, f) => {
-                gen.push_instr(UrclInstr::Beq { src1: self.get_vreg(*val), dst: LabelDest::Block(t.0) });
-                gen.push_instr(UrclInstr::Jmp { dst: LabelDest::Block(f.0) });
+                gen.push_instr(UrclInstr::Beq {
+                    src1: self.get_vreg(*val),
+                    dst: LabelDest::Block(t.0),
+                });
+                gen.push_instr(UrclInstr::Jmp {
+                    dst: LabelDest::Block(f.0),
+                });
             }
             Terminator::Jump(l) => {
-                gen.push_instr(UrclInstr::Jmp { dst: LabelDest::Block(l.0) });
+                gen.push_instr(UrclInstr::Jmp {
+                    dst: LabelDest::Block(l.0),
+                });
             }
             Terminator::Return(val) => {
-                gen.push_instr(UrclInstr::Mov { dst: VReg::Real(URCL_REG_1), src: self.get_vreg(*val)});
+                gen.push_instr(UrclInstr::Mov {
+                    dst: VReg::Real(URCL_REG_1),
+                    src: self.get_vreg(*val),
+                });
                 gen.push_instr(UrclInstr::Ret);
             }
-            _ => todo!()
+            _ => todo!(),
         }
     }
 }

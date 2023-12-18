@@ -4,15 +4,16 @@ pub mod algos;
 pub mod arch;
 pub mod builder;
 pub mod ir;
-pub mod vcode;
 pub mod regalloc;
+pub mod vcode;
 
 #[cfg(test)]
 mod tests {
     use crate::{
         algos::lower_to_ssa,
+        arch::urcl::UrclSelector,
         builder::ModuleBuilder,
-        ir::{BinOp, Terminator, Type}, arch::urcl::UrclSelector,
+        ir::{BinOp, Terminator, Type},
     };
 
     #[test]

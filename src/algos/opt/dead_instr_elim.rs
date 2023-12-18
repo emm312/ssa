@@ -20,7 +20,6 @@ impl OptPass for DeadInstrElim {
                         }
                     }
                     // TODO: delete assignment to the instr
-
                 }
             }
         }

@@ -1,4 +1,9 @@
-use ssa::{algos::lower_to_ssa, ir::{Terminator, BinOp, Type}, arch::urcl::UrclSelector, builder::ModuleBuilder};
+use ssa::{
+    algos::lower_to_ssa,
+    arch::urcl::UrclSelector,
+    builder::ModuleBuilder,
+    ir::{BinOp, Terminator, Type},
+};
 
 fn main() {
     let mut builder = ModuleBuilder::new("test");

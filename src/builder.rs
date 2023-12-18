@@ -1,9 +1,12 @@
 use std::collections::HashSet;
 
-use crate::{ir::{
-    BasicBlock, BinOp, BlockId, Function, FunctionId, Instruction, Linkage, Module, Operation,
-    Terminator, Type, Value, ValueId, Variable, VariableId,
-}, algos};
+use crate::{
+    algos,
+    ir::{
+        BasicBlock, BinOp, BlockId, Function, FunctionId, Instruction, Linkage, Module, Operation,
+        Terminator, Type, Value, ValueId, Variable, VariableId,
+    },
+};
 
 pub struct ModuleBuilder {
     module: Module,
@@ -189,6 +192,6 @@ impl ModuleBuilder {
                 children: vec![],
                 owner,
             });
-        ValueId(self.get_func(self.current_func.unwrap()).values.len()-1)
+        ValueId(self.get_func(self.current_func.unwrap()).values.len() - 1)
     }
 }

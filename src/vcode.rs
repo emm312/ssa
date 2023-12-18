@@ -1,6 +1,9 @@
 use std::fmt::Display;
 
-use crate::{ir::{Instruction, Linkage, Terminator}, regalloc::VReg};
+use crate::{
+    ir::{Instruction, Linkage, Terminator},
+    regalloc::VReg,
+};
 
 pub trait InstrSelector {
     type Instr: VCodeInstr;
