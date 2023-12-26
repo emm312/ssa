@@ -1,5 +1,8 @@
 use std::fmt::Display;
 
+pub mod graph_colouring;
+pub mod linear_scan;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum VReg {
     Virtual(usize),

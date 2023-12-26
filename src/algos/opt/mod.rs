@@ -1,6 +1,6 @@
 use crate::ir::Module;
 
-pub mod dead_instr_elim;
+pub mod constant_folding;
 
 pub trait OptPass {
     fn run(&mut self, module: &mut Module);
