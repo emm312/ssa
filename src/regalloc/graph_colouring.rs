@@ -1,11 +1,9 @@
 use super::{Regalloc, VReg};
 
-pub struct GraphColouringRegalloc {
-
-}
+pub struct GraphColouringRegalloc {}
 
 impl Regalloc for GraphColouringRegalloc {
-    fn force_same(&mut self, a: VReg, b: &[VReg]) {
+    fn force_same(&mut self, _a: VReg, _b: &[VReg]) {
         todo!()
     }
 }

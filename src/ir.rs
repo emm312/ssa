@@ -25,6 +25,11 @@ impl Module {
         }
     }
 
+    pub fn apply_mandatory_transforms(&mut self) {
+        crate::algos::remove_critical_edges::remove_critical_edges(self);
+        crate::algos::lower_to_ssa::lower(self);
+    }
+
     pub fn lower_to_vcode<I: VCodeInstr, S: InstrSelector<Instr = I> + Default>(&self) -> VCode<I> {
         let mut gen = VCodeGenerator::new();
         let mut selector = S::default();
@@ -176,7 +181,6 @@ pub struct BasicBlock {
     pub(crate) instructions: Vec<Instruction>,
     pub(crate) terminator: Terminator,
     pub(crate) preds: Vec<BlockId>,
-    pub(crate) succs: Vec<BlockId>,
     pub(crate) id: usize,
 }
 

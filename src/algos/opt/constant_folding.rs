@@ -1,11 +1,7 @@
 use super::OptPass;
 
-pub struct ConstantFolding {
-
-}
+pub struct ConstantFolding {}
 
 impl OptPass for ConstantFolding {
-    fn run(&mut self, module: &mut crate::ir::Module) {
-        
-    }
+    fn run(&mut self, module: &mut crate::ir::Module) {}
 }

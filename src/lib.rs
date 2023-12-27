@@ -10,7 +10,6 @@ pub mod vcode;
 #[cfg(test)]
 mod tests {
     use crate::{
-        algos::lower_to_ssa,
         arch::urcl::UrclSelector,
         builder::ModuleBuilder,
         ir::{BinOp, Terminator, Type},
@@ -71,7 +70,7 @@ mod tests {
         builder.print_module();
 
         let mut module = builder.build();
-        lower_to_ssa::lower(&mut module);
+        module.apply_mandatory_transforms();
         println!("{}", module);
         let vcode = module.lower_to_vcode::<_, UrclSelector>();
         println!("{}", vcode);
@@ -91,7 +90,7 @@ mod tests {
         builder.set_terminator(Terminator::Return(ld_x));
         builder.print_module();
         let mut module = builder.build();
-        lower_to_ssa::lower(&mut module);
+        module.apply_mandatory_transforms();
         println!("{}", module);
     }
 }

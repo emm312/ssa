@@ -1,11 +1,8 @@
 use std::collections::HashSet;
 
-use crate::{
-    algos,
-    ir::{
-        BasicBlock, BinOp, BlockId, Function, FunctionId, Instruction, Linkage, Module, Operation,
-        Terminator, Type, Value, ValueId, Variable, VariableId,
-    },
+use crate::ir::{
+    BasicBlock, BinOp, BlockId, Function, FunctionId, Instruction, Linkage, Module, Operation,
+    Terminator, Type, Value, ValueId, Variable, VariableId,
 };
 
 pub struct ModuleBuilder {
@@ -28,9 +25,7 @@ impl ModuleBuilder {
     }
 
     pub fn build(&self) -> Module {
-        let mut module = self.module.clone();
-        algos::lower_to_ssa::lower(&mut module);
-        module
+        self.module.clone()
     }
 
     pub fn build_nossa(&self) -> Module {
@@ -71,7 +66,6 @@ impl ModuleBuilder {
                 terminator: Terminator::NoTerm,
                 id,
                 preds: Vec::new(),
-                succs: Vec::new(),
             });
         BlockId(id)
     }
@@ -168,13 +162,10 @@ impl ModuleBuilder {
             Terminator::Return(_) => {}
             Terminator::Jump(loc) => {
                 self.get_block_mut(loc).preds.push(cur_blk);
-                self.get_block_mut(cur_blk).succs.push(loc);
             }
             Terminator::Branch(_, loc1, loc2) => {
                 self.get_block_mut(loc1).preds.push(cur_blk);
                 self.get_block_mut(loc2).preds.push(cur_blk);
-                self.get_block_mut(cur_blk).succs.push(loc1);
-                self.get_block_mut(cur_blk).succs.push(loc2);
             }
             _ => panic!("tried to set terminator to noterm"),
         }
