@@ -199,6 +199,16 @@ pub enum Linkage {
     External,
 }
 
+impl Display for Linkage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            Linkage::Public => "public",
+            Linkage::Private => "private",
+            Linkage::External => "external",
+        })
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Instruction {
     pub(crate) yielded: Option<ValueId>,
@@ -299,8 +309,9 @@ impl Display for Function {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(
             f,
-            "${}: fn {}({}) {} {{",
+            "${}: {} fn {}({}) {} {{",
             self.id,
+            self.linkage,
             self.name,
             self.args
                 .iter()
