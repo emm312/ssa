@@ -1,7 +1,6 @@
 use crate::ir::{BasicBlock, BlockId, Module, Terminator};
 
 pub fn remove_critical_edges(module: &mut Module) {
-    println!("{}", module);
     for func in module.functions.iter_mut() {
         let mut to_insert = Vec::new();
         let blocks = func.blocks.clone();
