@@ -272,7 +272,7 @@ impl Display for Module {
         writeln!(f, "/* {} module {} */", self.analysis_stage, self.name)?;
 
         for func in &self.functions {
-            write!(f, "{}", func)?;
+            writeln!(f, "{}", func)?;
         }
 
         Ok(())
