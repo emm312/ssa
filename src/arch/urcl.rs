@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::{
     ir::{BinOp, Instruction, Operation, Terminator, ValueId},
-    regalloc::VReg,
+    regalloc::{VReg, apply_alloc},
     vcode::{InstrSelector, LabelDest, VCodeGenerator, VCodeInstr},
 };
 
@@ -107,6 +107,61 @@ impl VCodeInstr for UrclInstr {
             VReg::Real(URCL_REG_7),
             VReg::Real(URCL_REG_8),
         ]
+    }
+
+    fn collect_registers(&self, regalloc: &mut impl crate::regalloc::Regalloc) {
+        match self {
+            Self::AluOp {
+                dst,
+                src1,
+                src2,
+                ..
+            } => {
+                regalloc.add_def(*dst);
+                regalloc.add_use(*src1);
+                regalloc.add_use(*src2);
+            }
+            Self::Jmp { .. } => (),
+            Self::Beq { src1, .. } => {
+                regalloc.add_use(*src1);
+            }
+            Self::Imm { dst, .. } => {
+                regalloc.add_def(*dst);
+            }
+            Self::Mov { dst, src } => {
+                regalloc.add_def(*dst);
+                regalloc.add_use(*src);
+                regalloc.coalesce_move(*src, *dst);
+            }
+            _ => ()
+        }
+    }
+
+    fn apply_allocs(&mut self, allocs: &std::collections::HashMap<VReg, VReg>) {
+        match self {
+            Self::AluOp {
+                dst,
+                src1,
+                src2,
+                ..
+            } => {
+                apply_alloc(dst, allocs);
+                apply_alloc(src1, allocs);
+                apply_alloc(src2, allocs);
+            }
+            Self::Jmp { .. } => (),
+            Self::Beq { src1, .. } => {
+                apply_alloc(src1, allocs);
+            }
+            Self::Imm { dst, .. } => {
+                apply_alloc(dst, allocs);
+            }
+            Self::Mov { dst, src } => {
+                apply_alloc(dst, allocs);
+                apply_alloc(src, allocs);
+            }
+            _ => ()
+        }
     }
 }
 

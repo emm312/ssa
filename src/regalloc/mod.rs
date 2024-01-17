@@ -1,6 +1,7 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
-pub mod graph_colouring;
+use crate::vcode::VCodeInstr;
+
 pub mod linear_scan;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -21,6 +22,15 @@ impl Display for VReg {
 }
 
 pub trait Regalloc {
-    /// This function forces a set of registers to match a VReg::Real
-    fn force_same(&mut self, a: VReg, b: &[VReg]);
+    fn add_def(&mut self, reg: VReg);
+    fn add_use(&mut self, reg: VReg);
+    fn next_instr(&mut self);
+    fn coalesce_move(&mut self, from: VReg, to: VReg);
+    fn alloc_regs<I: VCodeInstr>(&self) -> HashMap<VReg, VReg>;
+}
+
+pub fn apply_alloc(reg: &mut VReg, allocs: &HashMap<VReg, VReg>) {
+    if let Some(new_reg) = allocs.get(reg) {
+        *reg = *new_reg;
+    }
 }

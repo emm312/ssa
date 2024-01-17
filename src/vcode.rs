@@ -1,8 +1,8 @@
-use std::fmt::Display;
+use std::{fmt::Display, collections::HashMap};
 
 use crate::{
     ir::{Instruction, Linkage, Terminator},
-    regalloc::VReg,
+    regalloc::{VReg, Regalloc},
 };
 
 pub trait InstrSelector {
@@ -13,6 +13,8 @@ pub trait InstrSelector {
 
 pub trait VCodeInstr {
     fn get_usable_regs() -> &'static [VReg];
+    fn collect_registers(&self, regalloc: &mut impl Regalloc);
+    fn apply_allocs(&mut self, allocs: &HashMap<VReg, VReg>);
 }
 
 pub struct VCodeFunction<I: VCodeInstr> {

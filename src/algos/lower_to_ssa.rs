@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::ir::{
-    AnalysisStage, BasicBlock, BlockId, Function, Instruction, Module, Operation, ValueId,
-    VariableId,
+    Algo, BasicBlock, BlockId, Function, Instruction, Module, Operation, ValueId, VariableId,
 };
 
 use super::delete_instructions::delete;
@@ -14,7 +13,7 @@ use super::delete_instructions::delete;
 ///  - recurse into preds and find a def for each one
 ///  - all bbs have a last definition
 pub fn lower(module: &mut Module) {
-    module.analysis_stage = AnalysisStage::LoweredToSSA;
+    module.algos_run.push(Algo::PhiLowering);
     // Function: V: BB: I -> should delete instruction
     let mut func_dels: Vec<Vec<Vec<bool>>> = Vec::new();
     for (func_id, func) in (module.functions).iter_mut().enumerate() {

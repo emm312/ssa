@@ -12,7 +12,7 @@ mod tests {
     use crate::{
         arch::urcl::UrclSelector,
         builder::ModuleBuilder,
-        ir::{BinOp, Terminator, Type},
+        ir::{BinOp, Terminator, Type}, regalloc::linear_scan::LinearScanRegAlloc,
     };
 
     #[test]
@@ -72,7 +72,7 @@ mod tests {
         let mut module = builder.build();
         module.apply_mandatory_transforms();
         println!("{}", module);
-        let vcode = module.lower_to_vcode::<_, UrclSelector>();
+        let vcode = module.lower_to_vcode::<_, UrclSelector, LinearScanRegAlloc>();
         println!("{}", vcode);
     }
 
