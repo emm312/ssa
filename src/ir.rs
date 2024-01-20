@@ -68,9 +68,7 @@ impl Module {
             for bb in func.blocks.iter() {
                 let b = gen.push_block();
                 gen.switch_to_block(b);
-                if b == 0 {
-                    selector.get_pre_function_instructions(&mut gen);
-                }
+                
                 for instr in bb.instructions.iter() {
                     selector.select(&mut gen, instr);
                 }
