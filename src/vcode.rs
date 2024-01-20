@@ -1,14 +1,16 @@
-use std::{fmt::Display, collections::HashMap};
+use std::{collections::HashMap, fmt::Display};
 
 use crate::{
     ir::{Instruction, Linkage, Terminator},
-    regalloc::{VReg, Regalloc},
+    regalloc::{Regalloc, VReg},
 };
 
 pub trait InstrSelector {
     type Instr: VCodeInstr;
     fn select(&mut self, gen: &mut VCodeGenerator<Self::Instr>, instr: &Instruction);
     fn select_terminator(&mut self, gen: &mut VCodeGenerator<Self::Instr>, term: &Terminator);
+    fn get_pre_function_instructions(&mut self, gen: &mut VCodeGenerator<Self::Instr>);
+    fn get_post_function_instructions(&mut self, gen: &mut VCodeGenerator<Self::Instr>);
 }
 
 pub trait VCodeInstr {

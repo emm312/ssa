@@ -2,7 +2,8 @@ use ssa::{
     algos::lower_to_ssa,
     arch::urcl::UrclSelector,
     builder::ModuleBuilder,
-    ir::{BinOp, Terminator, Type}, regalloc::linear_scan::LinearScanRegAlloc,
+    ir::{BinOp, Terminator, Type},
+    regalloc::linear_scan::LinearScanRegAlloc,
 };
 
 fn main() {
@@ -10,7 +11,7 @@ fn main() {
     let func = builder.push_function("main", Type::Integer(32, true), vec![], None);
     builder.switch_to_fn(func);
 
-    let entry = builder.push_block("entry");
+    let entry = builder.push_block();
     builder.switch_to_block(entry);
 
     let x = builder.push_variable("x", Type::Integer(32, true));

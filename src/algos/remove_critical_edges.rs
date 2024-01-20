@@ -10,10 +10,10 @@ pub fn remove_critical_edges(module: &mut Module) {
                 if blocks[bb_1.0].preds.len() > 1 {
                     let bb = BasicBlock {
                         instructions: vec![],
-                        name: "critical_edge".to_string(),
                         preds: vec![BlockId(id)],
                         terminator: Terminator::Jump(bb_1),
                         id: blocks.len() + to_insert.len(),
+                        par_moves: blocks[bb_1.0].par_moves.clone(),
                     };
                     *func.blocks[bb_1.0]
                         .preds
@@ -28,10 +28,10 @@ pub fn remove_critical_edges(module: &mut Module) {
                 if blocks[bb_2.0].preds.len() > 1 {
                     let bb = BasicBlock {
                         instructions: vec![],
-                        name: "critical_edge".to_string(),
                         preds: vec![BlockId(block.id)],
                         terminator: Terminator::Jump(bb_2),
                         id: blocks.len() + to_insert.len(),
+                        par_moves: blocks[bb_2.0].par_moves.clone(),
                     };
                     *func.blocks[bb_2.0]
                         .preds

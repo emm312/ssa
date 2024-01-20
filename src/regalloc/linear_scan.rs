@@ -8,14 +8,13 @@ use super::{Regalloc, VReg};
 pub struct LinearScanRegAlloc {
     registers: Vec<RegAllocReg>,
     live_count: usize,
-    spill_counter: usize,
 }
 
 pub struct RegAllocReg {
     live_range: Range<usize>,
     uses: usize,
     reg: VReg,
-    try_to_coalesce_to: Option<VReg>
+    try_to_coalesce_to: Option<VReg>,
 }
 
 impl Regalloc for LinearScanRegAlloc {
@@ -30,7 +29,7 @@ impl Regalloc for LinearScanRegAlloc {
                 live_range: self.live_count..self.live_count,
                 uses: 0,
                 reg,
-                try_to_coalesce_to: None
+                try_to_coalesce_to: None,
             });
         }
     }
@@ -46,7 +45,7 @@ impl Regalloc for LinearScanRegAlloc {
                 live_range: self.live_count..self.live_count,
                 uses: 1,
                 reg,
-                try_to_coalesce_to: None
+                try_to_coalesce_to: None,
             });
         }
     }
@@ -64,13 +63,15 @@ impl Regalloc for LinearScanRegAlloc {
     fn alloc_regs<I: VCodeInstr>(&self) -> HashMap<VReg, VReg> {
         let mut ret = HashMap::new();
         let mut reg_stack = I::get_usable_regs().to_vec();
+        let mut spill_counter = 0;
         for i in 0..self.live_count {
             for reg in &self.registers {
                 if reg.live_range.start == i {
                     if let Some(to) = reg_stack.pop() {
                         ret.insert(reg.reg, to);
                     } else {
-
+                        spill_counter += 1;
+                        ret.insert(reg.reg, VReg::Spilled(spill_counter));
                     }
                 }
                 if reg.live_range.end == i {
@@ -80,7 +81,6 @@ impl Regalloc for LinearScanRegAlloc {
                 }
             }
         }
-        println!("{:#?}", ret);
         ret
     }
 }

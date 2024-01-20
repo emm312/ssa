@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::{
     ir::{BinOp, Instruction, Operation, Terminator, ValueId},
-    regalloc::{VReg, apply_alloc},
+    regalloc::{apply_alloc, VReg},
     vcode::{InstrSelector, LabelDest, VCodeGenerator, VCodeInstr},
 };
 
@@ -112,10 +112,7 @@ impl VCodeInstr for UrclInstr {
     fn collect_registers(&self, regalloc: &mut impl crate::regalloc::Regalloc) {
         match self {
             Self::AluOp {
-                dst,
-                src1,
-                src2,
-                ..
+                dst, src1, src2, ..
             } => {
                 regalloc.add_def(*dst);
                 regalloc.add_use(*src1);
@@ -133,17 +130,14 @@ impl VCodeInstr for UrclInstr {
                 regalloc.add_use(*src);
                 regalloc.coalesce_move(*src, *dst);
             }
-            _ => ()
+            _ => (),
         }
     }
 
     fn apply_allocs(&mut self, allocs: &std::collections::HashMap<VReg, VReg>) {
         match self {
             Self::AluOp {
-                dst,
-                src1,
-                src2,
-                ..
+                dst, src1, src2, ..
             } => {
                 apply_alloc(dst, allocs);
                 apply_alloc(src1, allocs);
@@ -160,7 +154,7 @@ impl VCodeInstr for UrclInstr {
                 apply_alloc(dst, allocs);
                 apply_alloc(src, allocs);
             }
-            _ => ()
+            _ => (),
         }
     }
 }
@@ -282,6 +276,14 @@ impl InstrSelector for UrclSelector {
             }
             _ => todo!(),
         }
+    }
+
+    fn get_post_function_instructions(&mut self, gen: &mut VCodeGenerator<Self::Instr>) {
+        
+    }
+
+    fn get_pre_function_instructions(&mut self, gen: &mut VCodeGenerator<Self::Instr>) {
+        
     }
 }
 

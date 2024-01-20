@@ -50,7 +50,7 @@ impl ModuleBuilder {
         FunctionId(self.module.functions.len() - 1)
     }
 
-    pub fn push_block(&mut self, name: &str) -> BlockId {
+    pub fn push_block(&mut self) -> BlockId {
         let id = self
             .module
             .functions
@@ -61,11 +61,11 @@ impl ModuleBuilder {
         self.module.functions[self.current_func.as_ref().unwrap().0]
             .blocks
             .push(BasicBlock {
-                name: name.to_string(),
                 instructions: vec![],
                 terminator: Terminator::NoTerm,
                 id,
                 preds: Vec::new(),
+                par_moves: Vec::new(),
             });
         BlockId(id)
     }
