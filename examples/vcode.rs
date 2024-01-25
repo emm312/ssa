@@ -1,9 +1,7 @@
 use ssa::{
     algos::lower_to_ssa,
-    arch::urcl::UrclSelector,
     builder::ModuleBuilder,
     ir::{BinOp, Terminator, Type},
-    regalloc::linear_scan::LinearScanRegAlloc,
 };
 
 fn main() {
@@ -27,6 +25,4 @@ fn main() {
     let mut module = builder.build();
     lower_to_ssa::lower(&mut module);
     println!("{}", module);
-    let vcode = module.lower_to_vcode::<_, UrclSelector, LinearScanRegAlloc>();
-    println!("{}", vcode);
 }

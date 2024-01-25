@@ -1,4 +1,7 @@
-use ssa::{builder::ModuleBuilder, ir::{Type, Terminator, BinOp}};
+use ssa::{
+    builder::ModuleBuilder,
+    ir::{BinOp, Terminator, Type},
+};
 
 fn main() {
     let mut builder = ModuleBuilder::new("test");

@@ -5,15 +5,12 @@ pub mod arch;
 pub mod builder;
 pub mod ir;
 pub mod regalloc;
-pub mod vcode;
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        arch::urcl::UrclSelector,
         builder::ModuleBuilder,
         ir::{BinOp, Terminator, Type},
-        regalloc::linear_scan::LinearScanRegAlloc,
     };
 
     #[test]
@@ -73,8 +70,6 @@ mod tests {
         let mut module = builder.build();
         module.apply_mandatory_transforms();
         println!("{}", module);
-        let vcode = module.lower_to_vcode::<_, UrclSelector, LinearScanRegAlloc>();
-        println!("{}", vcode);
     }
 
     #[test]

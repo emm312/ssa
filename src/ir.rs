@@ -1,11 +1,7 @@
 use std::{
     collections::HashSet,
-    fmt::{Debug, Display}, ops::Deref,
-};
-
-use crate::{
-    regalloc::Regalloc,
-    vcode::{InstrSelector, VCode, VCodeGenerator, VCodeInstr},
+    fmt::{Debug, Display},
+    ops::Deref,
 };
 
 /// `Module` is the struct containing all the functions and info about the
@@ -44,58 +40,6 @@ impl Module {
     pub fn apply_mandatory_transforms(&mut self) {
         crate::algos::remove_critical_edges::remove_critical_edges(self);
         crate::algos::lower_to_ssa::lower(self);
-
-        crate::algos::phi_lowering::lower_phis(self);
-    }
-
-    /// Lowers the module to vcode using the given instruction selector.
-    /// The instruction selector may be defined outside of this crate and used,
-    /// as long as you implement the `InstrSelector` trait for it and define
-    /// registers avaliable for use.
-    pub fn lower_to_vcode<
-        I: VCodeInstr,
-        S: InstrSelector<Instr = I> + Default,
-        R: Regalloc + Default,
-    >(
-        &self,
-    ) -> VCode<I> {
-        let mut gen = VCodeGenerator::new();
-        let mut selector = S::default();
-        for func in self.functions.iter() {
-            let f = gen.push_function(&func.name, func.linkage, func.args.len());
-            gen.switch_to_func(f);
-            
-            for bb in func.blocks.iter() {
-                let b = gen.push_block();
-                gen.switch_to_block(b);
-                
-                for instr in bb.instructions.iter() {
-                    selector.select(&mut gen, instr);
-                }
-                selector.select_terminator(&mut gen, &bb.terminator);
-            }
-            selector.get_post_function_instructions(&mut gen);
-        }
-        let mut v = gen.build();
-        let mut regalloc = R::default();
-        for func in &v.functions {
-            for block in &func.instrs {
-                for instr in &block.instrs {
-                    instr.collect_registers(&mut regalloc);
-                    regalloc.next_instr();
-                }
-            }
-        }
-        let allocs = regalloc.alloc_regs::<I>();
-        for func in v.functions.iter_mut() {
-            for block in func.instrs.iter_mut() {
-                for instr in block.instrs.iter_mut() {
-                    instr.apply_allocs(&allocs);
-                }
-            }
-        }
-
-        v
     }
 }
 
