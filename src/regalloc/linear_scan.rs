@@ -63,6 +63,7 @@ impl Regalloc for LinearScanRegAlloc {
     fn alloc_regs<I: VCodeInstr>(&self) -> HashMap<VReg, VReg> {
         let mut ret = HashMap::new();
         let mut reg_stack = I::get_usable_regs().to_vec();
+        reg_stack.reverse();
         let mut spill_counter = 0;
         for i in 0..self.live_count {
             for reg in &self.registers {

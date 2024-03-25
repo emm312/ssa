@@ -447,7 +447,7 @@ impl Display for BasicBlock {
         for instr in &self.instructions {
             writeln!(f, "    {}", instr)?;
         }
-        if self.par_moves.len() > 0 {
+        if !self.par_moves.is_empty() {
             let tmp = self
                 .par_moves
                 .iter()
